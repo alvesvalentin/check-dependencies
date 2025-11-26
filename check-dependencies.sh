@@ -7,9 +7,31 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Fichier contenant la liste des packages
-PACKAGES_FILE="packages.txt"
+# Vérifier les arguments
+if [ "$#" -lt 1 ]; then
+    echo -e "${RED}Usage: $0 <chemin/vers/package.json> [fichier_packages.txt]${NC}"
+    echo ""
+    echo "Exemples:"
+    echo "  $0 ./package.json"
+    echo "  $0 /chemin/vers/mon/projet/package.json packages.txt"
+    exit 1
+fi
+
+# Chemin vers le package.json
+PACKAGE_JSON_PATH="$1"
+
+# Fichier contenant la liste des packages (par défaut packages.txt)
+PACKAGES_FILE="${2:-packages.txt}"
 REPORT_FILE="dependencies-report.txt"
+
+# Vérifier si le package.json existe
+if [ ! -f "$PACKAGE_JSON_PATH" ]; then
+    echo -e "${RED}❌ Fichier package.json non trouvé: $PACKAGE_JSON_PATH${NC}"
+    exit 1
+fi
+
+# Obtenir le répertoire du package.json
+PACKAGE_DIR=$(dirname "$PACKAGE_JSON_PATH")
 
 # Vérifier si le fichier packages.txt existe
 if [ ! -f "$PACKAGES_FILE" ]; then
@@ -21,6 +43,7 @@ fi
 
 echo -e "${BLUE}🚀 Vérification des dépendances npm${NC}"
 echo ""
+echo -e "${BLUE}📦 Package.json: $PACKAGE_JSON_PATH${NC}"
 echo -e "${BLUE}🔍 Lecture de la liste des packages...${NC}"
 echo ""
 
@@ -37,7 +60,8 @@ echo ""
 echo -e "${BLUE}📊 Analyse de l'arbre de dépendances...${NC}"
 echo ""
 
-# Obtenir l'arbre complet des dépendances en JSON
+# Se déplacer dans le répertoire du package.json et obtenir l'arbre complet des dépendances
+cd "$PACKAGE_DIR" || exit 1
 DEPS_JSON=$(npm ls --all --json 2>/dev/null)
 
 if [ $? -ne 0 ] && [ -z "$DEPS_JSON" ]; then
